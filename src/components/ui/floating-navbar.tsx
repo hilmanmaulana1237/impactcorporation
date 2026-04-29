@@ -1,0 +1,107 @@
+"use client";
+import React, { useState } from "react";
+import {
+  motion,
+  AnimatePresence,
+  useScroll,
+  useMotionValueEvent,
+} from "framer-motion";
+import { cn } from "@/lib/utils";
+import Link from "next/link";
+
+export const FloatingNav = ({
+  navItems,
+  className,
+}: {
+  navItems: {
+    name: string;
+    link: string;
+    icon?: React.ReactNode;
+    children?: { name: string; link: string }[];
+  }[];
+  className?: string;
+}) => {
+  const { scrollYProgress } = useScroll();
+
+  const [visible, setVisible] = useState(false);
+
+  useMotionValueEvent(scrollYProgress, "change", (current) => {
+    // Check if current is not undefined and is a number
+    if (typeof current === "number") {
+      let direction = current! - scrollYProgress.getPrevious()!;
+
+      if (scrollYProgress.get() < 0.05) {
+        setVisible(false);
+      } else {
+        if (direction < 0) {
+          setVisible(true);
+        } else {
+          setVisible(false);
+        }
+      }
+    }
+  });
+
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        initial={{
+          opacity: 1,
+          y: -100,
+        }}
+        animate={{
+          y: visible ? 0 : -100,
+          opacity: visible ? 1 : 0,
+        }}
+        transition={{
+          duration: 0.2,
+        }}
+        className={cn(
+          "flex fixed top-4 inset-x-0 mx-auto border border-neutral-200 dark:border-neutral-800 rounded-full bg-white/90 dark:bg-black/90 backdrop-blur-md shadow-[0px_2px_3px_-1px_rgba(0,0,0,0.1),0px_1px_0px_0px_rgba(25,28,33,0.02),0px_0px_0px_1px_rgba(25,28,33,0.08)] z-[5000] px-4 py-3 md:px-8 md:py-3 items-center justify-center gap-4 sm:gap-6 md:gap-8 w-max max-w-[95%] overflow-visible",
+          className
+        )}
+      >
+        {navItems.map((navItem: any, idx: number) => (
+          <div key={`link=${idx}`} className="relative group">
+            <Link
+              href={navItem.link}
+              className={cn(
+                "relative items-center flex space-x-1 text-brand-gray/80 hover:text-brand-tosca transition-colors"
+              )}
+            >
+              <span className="block sm:hidden">{navItem.icon}</span>
+              <span className="hidden sm:flex items-center gap-1 text-sm font-medium">
+                {navItem.name}
+                {navItem.children?.length ? (
+                  <span className="text-[10px] opacity-70">v</span>
+                ) : null}
+              </span>
+            </Link>
+            {navItem.children?.length ? (
+              <div className="absolute left-1/2 -translate-x-1/2 top-full mt-3 hidden group-hover:block group-focus-within:block">
+                <div className="min-w-[220px] rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white/95 dark:bg-black/95 backdrop-blur-xl p-3 shadow-[0_20px_50px_rgba(0,0,0,0.2)]">
+                  {navItem.children.map((child) => (
+                    <Link
+                      key={child.name}
+                      href={child.link}
+                      className="block rounded-xl px-3 py-2 text-sm text-neutral-700 dark:text-neutral-200 hover:bg-brand-tosca/10 hover:text-brand-tosca transition-colors"
+                    >
+                      {child.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        ))}
+        <Link
+          href="/contact-us"
+          className="border text-sm font-medium relative border-brand-tosca/50 text-brand-tosca dark:text-white px-3 py-1.5 md:px-4 md:py-2 rounded-full hover:bg-brand-tosca/10 transition-colors"
+        >
+          <span>Daftar</span>
+          <span className="absolute inset-x-0 w-1/2 mx-auto -bottom-px bg-gradient-to-r from-transparent via-brand-tosca to-transparent h-px" />
+        </Link>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
