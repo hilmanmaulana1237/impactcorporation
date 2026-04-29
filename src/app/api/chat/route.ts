@@ -16,12 +16,14 @@ export async function POST(req: Request) {
     const { messages } = await req.json();
 
     const stream = await openrouter.chat.send({
-      model: "qwen/qwen3.6-35b-a3b",
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        ...messages
-      ],
-      stream: true,
+      chatRequest: {
+        model: "qwen/qwen3.6-35b-a3b",
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          ...messages
+        ],
+        stream: true,
+      }
     });
 
     const readableStream = new ReadableStream({
