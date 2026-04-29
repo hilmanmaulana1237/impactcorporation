@@ -32,17 +32,17 @@ export default function Page() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             {[
-              { label: "Startup Didampingi", value: "120+" },
-              { label: "Akses Modal", value: "$18M+" },
-              { label: "Jaringan Mentor", value: "300+" },
-              { label: "Program Berjalan", value: "40+" },
+              { title: "Validasi & MVP", desc: "Fokus pada traksi nyata" },
+              { title: "Mentorship", desc: "Pendampingan 1-on-1" },
+              { title: "Akses Permodalan", desc: "Jejaring investor strategis" },
+              { title: "Komunitas", desc: "Ekosistem kolaboratif" },
             ].map((item) => (
               <div
-                key={item.label}
-                className="bg-white dark:bg-black/60 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 text-center"
+                key={item.title}
+                className="bg-white dark:bg-black/60 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 text-center flex flex-col justify-center"
               >
-                <div className="text-2xl font-semibold text-neutral-900 dark:text-white">{item.value}</div>
-                <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">{item.label}</div>
+                <div className="text-lg font-semibold text-neutral-900 dark:text-white mb-1">{item.title}</div>
+                <div className="text-xs text-neutral-500 dark:text-neutral-400">{item.desc}</div>
               </div>
             ))}
           </div>
@@ -92,9 +92,9 @@ export default function Page() {
           <h2 className="text-3xl md:text-4xl font-light tracking-tight mb-8">Sorotan kepemimpinan</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { name: "Alya Pratama", role: "Lead Inkubasi" },
-              { name: "Rafi Mahendra", role: "Strategi Produk" },
-              { name: "Nadia Kencana", role: "Kemitraan Ekosistem" },
+              { name: "Yogi Saputra", role: "Chief Executive Officer", desc: "Memimpin strategi ekosistem dan mengorkestrasi pertumbuhan jangka panjang." },
+              { name: "Awang Dody Kardeli", role: "Chief Technology Officer", desc: "Arsitek platform teknologi dan solusi inovatif operasional inkubasi." },
+              { name: "Hilman Maulana", role: "Core Team", desc: "Mendukung eksekusi harian dan memastikan kejelasan produk bagi para founder." },
             ].map((item) => (
               <div
                 key={item.name}
@@ -103,7 +103,7 @@ export default function Page() {
                 <div className="text-lg font-semibold">{item.name}</div>
                 <div className="text-sm text-brand-tosca mt-1">{item.role}</div>
                 <p className="text-neutral-600 dark:text-brand-gray text-sm mt-3">
-                  Fokus membantu founder bergerak dari kejelasan menuju scale dengan hasil terukur.
+                  {item.desc}
                 </p>
               </div>
             ))}

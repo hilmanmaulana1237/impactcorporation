@@ -61,26 +61,38 @@ export const FloatingNav = ({
           className
         )}
       >
-        {navItems.map((navItem: any, idx: number) => (
+        {navItems.map((navItem: { name: string; link: string; icon?: React.ReactNode; children?: { name: string; link: string }[] }, idx: number) => (
           <div key={`link=${idx}`} className="relative group">
-            <Link
-              href={navItem.link}
-              className={cn(
-                "relative items-center flex space-x-1 text-brand-gray/80 hover:text-brand-tosca transition-colors"
-              )}
-            >
-              <span className="block sm:hidden">{navItem.icon}</span>
-              <span className="hidden sm:flex items-center gap-1 text-sm font-medium">
-                {navItem.name}
-                {navItem.children?.length ? (
+            {navItem.children?.length ? (
+              <div
+                className={cn(
+                  "relative items-center flex space-x-1 text-brand-gray/80 hover:text-brand-tosca transition-colors cursor-pointer"
+                )}
+              >
+                <span className="block sm:hidden">{navItem.icon}</span>
+                <span className="hidden sm:flex items-center gap-1 text-sm font-medium">
+                  {navItem.name}
                   <span className="text-[10px] opacity-70">v</span>
-                ) : null}
-              </span>
-            </Link>
+                </span>
+              </div>
+            ) : (
+              <Link
+                href={navItem.link}
+                className={cn(
+                  "relative items-center flex space-x-1 text-brand-gray/80 hover:text-brand-tosca transition-colors"
+                )}
+              >
+                <span className="block sm:hidden">{navItem.icon}</span>
+                <span className="hidden sm:flex items-center gap-1 text-sm font-medium">
+                  {navItem.name}
+                </span>
+              </Link>
+            )}
+            
             {navItem.children?.length ? (
               <div className="absolute left-1/2 -translate-x-1/2 top-full mt-3 hidden group-hover:block group-focus-within:block">
                 <div className="min-w-[220px] rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white/95 dark:bg-black/95 backdrop-blur-xl p-3 shadow-[0_20px_50px_rgba(0,0,0,0.2)]">
-                  {navItem.children.map((child) => (
+                  {navItem.children.map((child: { name: string; link: string }) => (
                     <Link
                       key={child.name}
                       href={child.link}

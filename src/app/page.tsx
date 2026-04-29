@@ -749,7 +749,7 @@ export default function Home() {
           <div className="flex items-center gap-5">
             <div className="relative w-14 h-14 md:w-16 md:h-16 rounded-2xl overflow-hidden border border-brand-tosca/20 shadow-[0_0_30px_rgba(31,75,154,0.1)] group">
               <Image
-                src="/logo with name.png"
+                src="/logo without name.png"
                 fill
                 className="object-cover group-hover:scale-110 transition-transform duration-500"
                 alt="Logo IMPACT Inc."
