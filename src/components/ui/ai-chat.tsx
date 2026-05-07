@@ -3,18 +3,80 @@ import { useState, useRef, useEffect } from "react";
 import { IconMessageCircle, IconX, IconSend } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "framer-motion";
 
+type ChatMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
+
+const CHAT_STORAGE_KEY = "impact-ai-chat-messages";
+const CHAT_REQUEST_TIMEOUT_MS = 45000;
+const MAX_STORED_MESSAGES = 50;
+
+const initialMessages: ChatMessage[] = [
+  {
+    role: "assistant",
+    content: "Halo! Saya adalah asisten AI dari IMPACT Inc. Ada yang bisa saya bantu tentang program inkubasi kami?",
+  },
+];
+
+const isChatMessage = (message: unknown): message is ChatMessage => {
+  if (!message || typeof message !== "object") return false;
+  const candidate = message as Partial<ChatMessage>;
+  return (
+    (candidate.role === "user" || candidate.role === "assistant") &&
+    typeof candidate.content === "string"
+  );
+};
+
 export const AIChat = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<{ role: "user" | "assistant"; content: string }[]>([
-    { role: "assistant", content: "Halo! Saya adalah asisten AI dari IMPACT Inc. Ada yang bisa saya bantu tentang program inkubasi kami?" }
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [hasLoadedSavedMessages, setHasLoadedSavedMessages] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const activeRequestRef = useRef<AbortController | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+
+  useEffect(() => {
+    try {
+      const savedMessages = window.localStorage.getItem(CHAT_STORAGE_KEY);
+
+      if (savedMessages) {
+        const parsedMessages = JSON.parse(savedMessages);
+
+        if (Array.isArray(parsedMessages)) {
+          const cleanMessages = parsedMessages.filter(isChatMessage).slice(-MAX_STORED_MESSAGES);
+          setMessages(cleanMessages.length ? cleanMessages : initialMessages);
+        }
+      }
+    } catch (error) {
+      console.warn("Failed to restore IMPACT AI chat messages", error);
+      window.localStorage.removeItem(CHAT_STORAGE_KEY);
+    } finally {
+      setHasLoadedSavedMessages(true);
+    }
+
+    return () => {
+      activeRequestRef.current?.abort();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!hasLoadedSavedMessages) return;
+
+    try {
+      window.localStorage.setItem(
+        CHAT_STORAGE_KEY,
+        JSON.stringify(messages.slice(-MAX_STORED_MESSAGES))
+      );
+    } catch (error) {
+      console.warn("Failed to save IMPACT AI chat messages", error);
+    }
+  }, [hasLoadedSavedMessages, messages]);
 
   useEffect(() => {
     if (isOpen) {
@@ -26,15 +88,31 @@ export const AIChat = () => {
     if (!input.trim() || isLoading) return;
 
     const userMessage = { role: "user" as const, content: input.trim() };
-    setMessages((prev) => [...prev, userMessage]);
+    const nextMessages = [...messages, userMessage];
+    setMessages(nextMessages);
     setInput("");
     setIsLoading(true);
+
+    const abortController = new AbortController();
+    activeRequestRef.current = abortController;
+    let timeoutId = window.setTimeout(() => {
+      abortController.abort();
+    }, CHAT_REQUEST_TIMEOUT_MS);
+    const refreshTimeout = () => {
+      window.clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(() => {
+        abortController.abort();
+      }, CHAT_REQUEST_TIMEOUT_MS);
+    };
+    let assistantMessageCreated = false;
+    let hasReceivedContent = false;
 
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: [...messages, userMessage] }),
+        body: JSON.stringify({ messages: nextMessages }),
+        signal: abortController.signal,
       });
 
       if (!response.ok) throw new Error("Network error");
@@ -44,22 +122,81 @@ export const AIChat = () => {
       const decoder = new TextDecoder("utf-8");
       
       setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+      assistantMessageCreated = true;
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         const chunk = decoder.decode(value, { stream: true });
+        if (!chunk) continue;
+        refreshTimeout();
+        hasReceivedContent = true;
         
         setMessages((prev) => {
           const newMessages = [...prev];
-          newMessages[newMessages.length - 1].content += chunk;
+          const lastMessage = newMessages[newMessages.length - 1];
+
+          if (!lastMessage || lastMessage.role !== "assistant") {
+            return [...newMessages, { role: "assistant", content: chunk }];
+          }
+
+          newMessages[newMessages.length - 1] = {
+            ...lastMessage,
+            content: lastMessage.content + chunk,
+          };
+          return newMessages;
+        });
+      }
+
+      if (!hasReceivedContent) {
+        setMessages((prev) => {
+          const newMessages = [...prev];
+          const lastMessage = newMessages[newMessages.length - 1];
+
+          if (lastMessage?.role === "assistant" && !lastMessage.content.trim()) {
+            newMessages[newMessages.length - 1] = {
+              ...lastMessage,
+              content: "Maaf, AI belum mengirim respons. Coba kirim ulang sebentar lagi.",
+            };
+          }
+
           return newMessages;
         });
       }
     } catch (error) {
       console.error(error);
-      setMessages((prev) => [...prev, { role: "assistant", content: "Maaf, terjadi kesalahan saat menyambung ke server." }]);
+      const errorMessage =
+        error instanceof Error && error.name === "AbortError"
+          ? "Maaf, respons AI terlalu lama. Silakan coba lagi."
+          : "Maaf, terjadi kesalahan saat menyambung ke server.";
+
+      setMessages((prev) => {
+        const newMessages = [...prev];
+        const lastMessage = newMessages[newMessages.length - 1];
+
+        if (
+          assistantMessageCreated &&
+          lastMessage?.role === "assistant" &&
+          !lastMessage.content.trim()
+        ) {
+          newMessages[newMessages.length - 1] = {
+            ...lastMessage,
+            content: errorMessage,
+          };
+          return newMessages;
+        }
+
+        if (assistantMessageCreated && hasReceivedContent) {
+          return newMessages;
+        }
+
+        return [...newMessages, { role: "assistant", content: errorMessage }];
+      });
     } finally {
+      window.clearTimeout(timeoutId);
+      if (activeRequestRef.current === abortController) {
+        activeRequestRef.current = null;
+      }
       setIsLoading(false);
     }
   };

@@ -753,6 +753,7 @@ export default function Home() {
                 fill
                 className="object-cover group-hover:scale-110 transition-transform duration-500"
                 alt="Logo IMPACT Inc."
+                sizes="(min-width: 768px) 64px, 56px"
               />
             </div>
             <div className="flex flex-col gap-1">
@@ -772,7 +773,7 @@ export default function Home() {
 
         <div className="max-w-7xl mx-auto px-6 md:px-8 border-t border-brand-gray/20 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="text-neutral-600 dark:text-brand-gray/70 text-xs md:text-sm text-center md:text-left">
-            © {new Date().getFullYear()} IMPACT Inc. All rights reserved.
+            &copy; {new Date().getFullYear()} IMPACT Inc. All rights reserved.
           </div>
           <div className="text-brand-tosca text-xs text-center md:text-right uppercase tracking-[0.2em] font-medium">
             Bangun. Tumbuh. Berdampak.

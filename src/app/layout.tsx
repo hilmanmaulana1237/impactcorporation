@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   description: "IMPACT Inc. membantu startup bertumbuh dengan program inkubasi, akses mentor, jaringan investor, dan ekosistem kolaborasi berdampak.",
   icons: {
     icon: "/logo without name.png",
-    apple: "/logo without name.png"
+    apple: "/logo without name.png",
   }
 };
 
